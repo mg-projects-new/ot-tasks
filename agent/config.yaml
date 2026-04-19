@@ -1,0 +1,16 @@
+# Rubric keys must match folder names: "{Rubric} Tasks" / "{Rubric} Examples"
+rubrics:
+  Strategy:
+    notes: |
+      SMM carousel: Cards 1–7 narrative, Card 8 split IG/FB, plus IG/FB/TG post rows.
+      Personalized rubric — mention the expert name from the brief on Card 1.
+      Compliance: no guaranteed profit language, keep educational tone.
+  Glossary:
+    notes: |
+      One term per task. Short IG/TG caption style with emoji where examples use them.
+  UGC:
+    notes: |
+      TikTok captions. Hook in first 3 words. Trader POV, first-person, conversational.
+  First steps in trading:
+    notes: |
+      Beginner-friendly educational content. Simple language, no jargon without explanation.
