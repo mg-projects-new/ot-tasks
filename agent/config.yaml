@@ -1,16 +1,29 @@
-# Rubric keys must match folder names: "{Rubric} Tasks" / "{Rubric} Examples"
 rubrics:
   Strategy:
     notes: |
-      SMM carousel: Cards 1–7 narrative, Card 8 split IG/FB, plus IG/FB/TG post rows.
-      Personalized rubric — mention the expert name from the brief on Card 1.
-      Compliance: no guaranteed profit language, keep educational tone.
+      # ... whatever you have now ...
+
   Glossary:
     notes: |
-      One term per task. Short IG/TG caption style with emoji where examples use them.
+      # ... whatever you have now ...
+
   UGC:
     notes: |
-      TikTok captions. Hook in first 3 words. Trader POV, first-person, conversational.
-  First steps in trading:
-    notes: |
-      Beginner-friendly educational content. Simple language, no jargon without explanation.
+      UGC = TikTok short-form videos. Produce TWO pieces of copy per video:
+      1. Cover — the short hook text shown on the video thumbnail / first frame.
+         Usually 3–8 words, with one or two emoji. Should stop the scroll.
+         Examples: "Waiting for a sign? 📦", "They lied to you 👀", "Daily routine of a trader boyfriend 📱☕"
+      2. Caption — the post caption below the video.
+         Usually 1–3 short lines. Separate paragraph breaks by using the literal text " | " (space-pipe-space) INSIDE the same string.
+         Always end with a CTA like "Tap 💚 if ...".
+         Voice: first-person or second-person, conversational, meme-aware, playful.
+         Topics often reference partner/friend/couple dynamics, relatable trader habits.
+
+      Per-video guidance:
+      - Each video block in the brief (`*Видео 1.*`, `*Видео 2.*`, etc.) includes a "Подводка к посту" (caption direction) and a "Пример" (example reel with a sample caption).
+      - Use the caption direction as the functional goal for that video (e.g. "Шутка + ста на лайк" = joke + like CTA).
+      - Use the `Пример` as a voice anchor — match its rhythm, tone, and emoji density, NOT its literal content.
+      - Do not invent script narrative content that isn't in the brief (the actual video script lives in a linked Google Doc the agent can't access).
+      - If the brief only supplies the caption direction and example, produce Cover + Caption that fit the video concept — that is the only output needed.
+
+      Compliance: no guaranteed profit language; no "risk-free" claims; keep it playful but responsible.

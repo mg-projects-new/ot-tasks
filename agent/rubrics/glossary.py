@@ -1,4 +1,4 @@
-"""Glossary rubric: infer columns/rows from example xlsx; fill copy."""
+"""Glossary rubric: English-only output. Fixed 3-column layout (Label | EN | Chars)."""
 
 from __future__ import annotations
 
@@ -14,189 +14,96 @@ from openpyxl.styles import Alignment, Font
 from excel_io.fill_template import apply_sheet_defaults
 
 
-@dataclass
-class GlossaryLayout:
-    """Discovered from a template sheet."""
-
-    locale_to_col: dict[str, int]  # e.g. en -> 2
-    chars_cols: set[int] = field(default_factory=set)
-    row_labels: dict[str, int] = field(default_factory=dict)  # image_title -> row
-    sheet_name: str = "Лист1"
-
-
-_LABEL_ALIASES: dict[str, str] = {
-    "image title": "image_title",
-    "ig": "ig",
-    "fb": "fb",
-    "tg": "tg",
-    "tg post": "tg",
-    "twitter (260)": "twitter",
-    "twitter": "twitter",
-    "button": "button",
+# Row labels in the order they appear in the output xlsx
+ROW_ORDER = ["image_title", "ig", "fb", "tg", "button"]
+ROW_DISPLAY = {
+    "image_title": "Image Title",
+    "ig": "IG",
+    "fb": "FB",
+    "tg": "TG Post",
+    "button": "Button",
 }
 
 
-def _norm_a_label(val: Any) -> str | None:
-    if val is None:
-        return None
-    s = str(val).strip().lower()
-    if not s:
-        return None
-    if s in _LABEL_ALIASES:
-        return _LABEL_ALIASES[s]
-    if s.startswith("twitter"):
-        return "twitter"
-    return None
+@dataclass
+class GlossaryLayout:
+    """Kept as a dataclass for back-compat with run.py, but English-only now."""
+    sheet_name: str = "Лист1"
+    row_labels: dict[str, int] = field(default_factory=dict)
 
 
-def discover_locale_columns(ws) -> tuple[dict[str, int], set[int]]:
-    """
-    Find text columns and locale codes from row 2.
-    Pattern: ... [locale | 'Chars'] pairs; implicit 'en' if col B precedes first Chars.
-    """
-    locale_to_col: dict[str, int] = {}
-    chars_cols: set[int] = set()
-    max_col = ws.max_column or 0
-    for c in range(2, max_col + 1):
-        v2 = ws.cell(2, c).value
-        if v2 is None:
-            continue
-        if str(v2).strip().lower() == "chars":
-            chars_cols.add(c)
-            dc = c - 1
-            loc_cell = ws.cell(2, dc).value
-            if loc_cell is None or str(loc_cell).strip() == "":
-                if dc == 2:
-                    loc_code = "en"
-                else:
-                    loc_code = f"col{dc}"
-            else:
-                loc_code = str(loc_cell).strip().lower()
-            locale_to_col[loc_code] = dc
-
-    if not locale_to_col and max_col >= 2:
-        # Fallback: row 1 style without Chars markers — treat row 2 as locale names
-        for c in range(2, max_col + 1):
-            v = ws.cell(2, c).value
-            if v and str(v).strip().lower() not in ("chars",):
-                locale_to_col[str(v).strip().lower()] = c
-
-    return locale_to_col, chars_cols
+def glossary_json_template() -> dict[str, Any]:
+    """Empty template for the prompt schema — flat English-only strings."""
+    return {label: "" for label in ROW_ORDER}
 
 
-def discover_row_labels(ws) -> dict[str, int]:
-    out: dict[str, int] = {}
-    for r in range(1, min(ws.max_row or 0, 60) + 1):
-        key = _norm_a_label(ws.cell(r, 1).value)
-        if key and key not in out:
-            out[key] = r
-    return out
+def glossary_schema_json_text(layout: GlossaryLayout | None = None) -> str:
+    return json.dumps(glossary_json_template(), ensure_ascii=False, indent=2)
 
 
-def load_layout_from_workbook(wb: Workbook) -> GlossaryLayout:
-    ws = wb.active
-    locs, chars = discover_locale_columns(ws)
-    rows = discover_row_labels(ws)
-    return GlossaryLayout(
-        locale_to_col=locs,
-        chars_cols=chars,
-        row_labels=rows,
-        sheet_name=ws.title,
-    )
-
-
-def glossary_json_template(layout: GlossaryLayout) -> dict[str, Any]:
-    """Empty nested dict for all logical rows × locales present in template."""
-    locs = sorted(layout.locale_to_col.keys(), key=lambda x: (x != "en", x))
-    key_order = ["image_title", "ig", "fb", "tg", "twitter", "button"]
-    root: dict[str, Any] = {}
-    for lk in key_order:
-        if lk not in layout.row_labels:
-            continue
-        root[lk] = {loc: "" for loc in locs}
-    return root
-
-
-def glossary_schema_json_text(layout: GlossaryLayout) -> str:
-    return json.dumps(glossary_json_template(layout), ensure_ascii=False, indent=2)
-
-
-def _col_letter(n: int) -> str:
-    s = ""
-    while n:
-        n, r = divmod(n - 1, 26)
-        s = chr(65 + r) + s
-    return s
-
-
-def _max_column_quick(path: Path) -> int:
-    wb = load_workbook(path, read_only=True, data_only=True)
-    try:
-        return int(wb.active.max_column or 0)
-    finally:
-        wb.close()
+def get_glossary_layout(examples_dir: Path) -> GlossaryLayout:
+    """Layout is fixed now; returned for back-compat with run.py."""
+    layout = GlossaryLayout()
+    for i, key in enumerate(ROW_ORDER, start=3):
+        layout.row_labels[key] = i
+    return layout
 
 
 def pick_template_path(examples_dir: Path) -> Path | None:
-    """Prefer the widest example sheet so locale columns match production exports."""
-    if not examples_dir.is_dir():
-        return None
-    paths = [
-        p
-        for p in examples_dir.glob("*.xlsx")
-        if p.is_file() and not p.name.startswith("~$")
-    ]
-    if not paths:
-        return None
-    return max(paths, key=_max_column_quick)
+    """Not used in English-only mode — we build a fresh workbook every time."""
+    return None
 
 
 def create_minimal_glossary_workbook() -> Workbook:
-    """
-    When no Examples exist: wide grid similar to real glossary exports.
-    Locales: en + 13 others with Chars columns.
-    """
-    locales = ["en", "ar", "es", "fr", "hi", "id", "ko", "ms", "pt", "ru", "th", "tr", "vi", "fa"]
+    """Build the English-only Glossary sheet from scratch: A=Label, B=EN, C=Chars."""
     wb = Workbook()
     ws = wb.active
     ws.title = "Лист1"
     font = Font(name="Arial", size=10)
     wrap = Alignment(wrap_text=True, vertical="top")
 
+    # Row 1: Jira link
     ws["A1"] = "Jira Task Link →"
+    ws["A1"].font = font
+    ws["A1"].alignment = wrap
     ws["B1"] = ""
-    col = 2
-    ws.cell(2, 1, None)
-    for loc in locales:
-        ws.cell(2, col, loc.upper() if loc == "en" else loc.upper())
-        ws.cell(2, col).font = font
-        ws.cell(2, col).alignment = wrap
-        col += 1
-        ws.cell(2, col, "Chars")
-        ws.cell(2, col).font = font
-        ws.cell(2, col).alignment = wrap
-        col += 1
+    ws["B1"].font = font
 
-    labels = ["Image Title", "IG", "FB", "TG Post", "Twitter (260)", "Button"]
-    r0 = 3
-    for i, lab in enumerate(labels):
-        r = r0 + i
-        ws.cell(r, 1, lab)
-        ws.cell(r, 1).font = font
-        ws.cell(r, 1).alignment = wrap
-        cc = 2
-        for loc in locales:
-            ws.cell(r, cc, "")
-            ws.cell(r, cc).font = font
-            ws.cell(r, cc).alignment = wrap
-            cl = _col_letter(cc)
-            ws.cell(r, cc + 1, f"=LEN({cl}{r})")
-            ws.cell(r, cc + 1).font = font
-            ws.cell(r, cc + 1).alignment = wrap
-            cc += 2
+    # Row 2: column headers
+    ws["A2"] = None
+    ws["B2"] = "EN"
+    ws["C2"] = "Chars"
+    for c in ("B2", "C2"):
+        ws[c].font = Font(name="Arial", size=10, bold=True)
+        ws[c].alignment = wrap
+
+    # Row 3+: label rows
+    for i, key in enumerate(ROW_ORDER, start=3):
+        ws.cell(i, 1, ROW_DISPLAY[key])
+        ws.cell(i, 1).font = font
+        ws.cell(i, 1).alignment = wrap
+        ws.cell(i, 2, "")
+        ws.cell(i, 2).font = font
+        ws.cell(i, 2).alignment = wrap
+        ws.cell(i, 3, f"=LEN(B{i})")
+        ws.cell(i, 3).font = font
+        ws.cell(i, 3).alignment = wrap
+
+    # Column widths
+    ws.column_dimensions["A"].width = 18
+    ws.column_dimensions["B"].width = 80
+    ws.column_dimensions["C"].width = 8
 
     apply_sheet_defaults(ws, freeze_row=2)
     return wb
+
+
+def load_layout_from_workbook(wb: Workbook) -> GlossaryLayout:
+    """Back-compat no-op: return the fixed English layout."""
+    layout = GlossaryLayout(sheet_name=wb.active.title)
+    for i, key in enumerate(ROW_ORDER, start=3):
+        layout.row_labels[key] = i
+    return layout
 
 
 def fill_glossary_workbook(
@@ -206,51 +113,44 @@ def fill_glossary_workbook(
     jira_url: str,
     layout: GlossaryLayout,
 ) -> None:
+    """Write English copy into column B of each label row."""
     ws = wb[layout.sheet_name] if layout.sheet_name in wb.sheetnames else wb.active
-    ws["B1"] = jira_url
     font = Font(name="Arial", size=10)
     wrap = Alignment(wrap_text=True, vertical="top")
 
-    for logical, row_idx in layout.row_labels.items():
-        block = data.get(logical)
-        if not isinstance(block, dict):
-            block = {}
-        for loc, col_idx in layout.locale_to_col.items():
-            val = block.get(loc, "")
-            text = "" if val is None else str(val)
-            cell = ws.cell(row_idx, col_idx, text)
-            cell.font = font
-            cell.alignment = wrap
-            if col_idx + 1 in layout.chars_cols:
-                cl = _col_letter(col_idx)
-                ws.cell(row_idx, col_idx + 1, f"=LEN({cl}{row_idx})")
-                ws.cell(row_idx, col_idx + 1).font = font
-                ws.cell(row_idx, col_idx + 1).alignment = wrap
+    ws["B1"] = jira_url
+    ws["B1"].font = font
+
+    for key in ROW_ORDER:
+        row_idx = layout.row_labels.get(key)
+        if not row_idx:
+            continue
+        val = data.get(key, "")
+        text = "" if val is None else str(val)
+        ws.cell(row_idx, 2, text)
+        ws.cell(row_idx, 2).font = font
+        ws.cell(row_idx, 2).alignment = wrap
+        ws.cell(row_idx, 3, f"=LEN(B{row_idx})")
+        ws.cell(row_idx, 3).font = font
+        ws.cell(row_idx, 3).alignment = wrap
 
     apply_sheet_defaults(ws, freeze_row=2)
 
 
-def normalize_glossary_payload(raw: dict[str, Any], layout: GlossaryLayout) -> dict[str, Any]:
-    tmpl = glossary_json_template(layout)
-    out = copy.deepcopy(tmpl)
-    for key, locs in out.items():
-        if key not in raw or not isinstance(raw[key], dict):
+def normalize_glossary_payload(raw: dict[str, Any], layout: GlossaryLayout | None = None) -> dict[str, Any]:
+    """Pull top-level string values per row key, ignoring any locale nesting if the model returns it."""
+    out = {key: "" for key in ROW_ORDER}
+    if not isinstance(raw, dict):
+        return out
+    for key in ROW_ORDER:
+        if key not in raw:
             continue
-        for loc in locs:
-            if loc in raw[key] and raw[key][loc] is not None:
-                out[key][loc] = str(raw[key][loc])
+        v = raw[key]
+        if isinstance(v, str):
+            out[key] = v
+        elif isinstance(v, dict):
+            # If model produces nested locale dict anyway, take "en"
+            out[key] = str(v.get("en", "") or "")
+        elif v is not None:
+            out[key] = str(v)
     return out
-
-
-def get_glossary_layout(examples_dir: Path) -> GlossaryLayout:
-    """Infer column/row mapping from the widest example, or from a built-in minimal grid."""
-    path = pick_template_path(examples_dir)
-    if path is None:
-        wb = create_minimal_glossary_workbook()
-        layout = load_layout_from_workbook(wb)
-        wb.close()
-        return layout
-    wb = load_workbook(path)
-    layout = load_layout_from_workbook(wb)
-    wb.close()
-    return layout
