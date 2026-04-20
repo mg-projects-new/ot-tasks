@@ -31,8 +31,10 @@ from rubrics import glossary as glossary_rubric  # noqa: E402
 from rubrics import strategy as strategy_rubric  # noqa: E402
 from rubrics import ugc as ugc_rubric  # noqa: E402
 from rubrics import first_steps as first_steps_rubric  # noqa: E402
+from rubrics import ongoing_p1 as ongoing_p1_rubric  # noqa: E402
+from rubrics import ongoing_p2 as ongoing_p2_rubric  # noqa: E402
 
-IMPLEMENTED = {"Strategy", "Glossary", "UGC", "First steps in trading"}
+IMPLEMENTED = {"Strategy", "Glossary", "UGC", "First steps in trading", "Ongoing P1", "Ongoing P2"}
 SCAFFOLDED: set[str] = set()
 
 logger = logging.getLogger("ot_agent")
@@ -145,10 +147,94 @@ Strict rules:
 """
 
 
+def _build_expert_context_for_brief(brief: dict[str, Any]) -> str:
+    """Shared helper used by Glossary, Strategy, and First steps rubrics.
+
+    Looks for a Google Doc URL in the brief Description, fetches the
+    best-matching tab, and returns a labeled context block with STRICT
+    rules so Claude treats the expert source as ground truth (not
+    inspiration). Explicitly tells Claude to ignore example workbook
+    numbers since those come from other topics.
+
+    Returns empty string if no doc URL found or no usable tab matched —
+    caller then generates without expert source (graceful fallback)."""
+    description = str(brief.get("Description") or "")
+    summary = str(brief.get("Summary") or "")
+    try:
+        from docs_client import extract_doc_id, fetch_tab_text_for_ticket
+        doc_id = extract_doc_id(description)
+        if not doc_id:
+            logger.info("No Google Doc URL found in brief description")
+            return ""
+        logger.info("Fetching expert source from Google Doc %s ...", doc_id)
+        result = fetch_tab_text_for_ticket(
+            agent_dir=AGENT_DIR, doc_id=doc_id, ticket_summary=summary,
+        )
+        if not result:
+            logger.warning("No matching expert tab found; proceeding without expert source")
+            return ""
+        tab_title, expert_text = result
+        logger.info("Using expert tab %r (%d chars)", tab_title, len(expert_text))
+        return (
+            "=== EXPERT SOURCE MATERIAL - THIS IS GROUND TRUTH, NOT INSPIRATION ===\n"
+            f"Matched tab: {tab_title!r}\n"
+            "This is the expert's own draft on this exact topic. Treat it as the\n"
+            "authoritative source for ALL content you produce. The reference example\n"
+            "workbooks shown elsewhere in this prompt are ONLY for voice, tone, and\n"
+            "layout reference - their content (numbers, examples, structure) must NOT\n"
+            "be used. Use ONLY what appears in this expert source.\n"
+            "\n"
+            "=== HARD RULES ===\n"
+            "1. NUMBERS: Use ONLY the numbers from the expert source above. If the\n"
+            "   expert says 85%, write 85% - do NOT write 82%, 80%, or any other\n"
+            "   nearby percentage. If the expert says $10, write $10 - not $100.\n"
+            "   CRITICAL: The reference example workbooks elsewhere in this prompt\n"
+            "   contain numbers from DIFFERENT topics (other expert drafts). Those\n"
+            "   numbers are COMPLETELY IRRELEVANT to this task. Ignore them.\n"
+            "   If you find yourself writing a number that is not in the expert\n"
+            "   source above, stop and copy the expert's exact number instead.\n"
+            "   Do NOT invent comparison numbers (like '70% vs 85%' or 'EUR/USD at\n"
+            "   80% vs gold at 85%') that aren't in the source.\n"
+            "2. EXAMPLES: Use ONLY the scenarios/examples the expert wrote. Do NOT\n"
+            "   invent new examples (e.g. expiration-time comparisons, asset-pair\n"
+            "   comparisons, '1-minute vs 5-minute' framing) that aren't in the\n"
+            "   source text.\n"
+            "3. THEMES: Reflect the expert's actual framing and key themes, not a\n"
+            "   generic take on the topic. If the expert's thesis is about 'agency'\n"
+            "   and 'informed decisions', that must be the thesis of your post too.\n"
+            "4. INVENTION BAN: If a concept, statistic, or example is not in the\n"
+            "   expert text, do NOT include it. Compress/reorganize what's there -\n"
+            "   don't supplement it with outside knowledge.\n"
+            "\n"
+            "=== STRUCTURE MIRRORING ===\n"
+            "The expert's draft typically has:\n"
+            "  - An opening hook/question (use for Image Title and post openers)\n"
+            "  - Named section headers in bold\n"
+            "  - A concrete numeric example\n"
+            "  - A 'Key takeaways' bullet list at the end\n"
+            "\n"
+            "Use the expert's sections as the content scaffold for your output. The\n"
+            "rubric-specific notes (provided separately) tell you HOW to map these\n"
+            "sections into the rubric's schema fields (e.g. cards vs posts for First\n"
+            "steps, definition vs example for Glossary).\n"
+            "\n"
+            "=== EXPERT SOURCE TEXT BEGINS ===\n"
+            f"{expert_text}\n"
+            "=== EXPERT SOURCE TEXT ENDS ===\n"
+        )
+    except Exception as e:
+        logger.warning("Could not fetch expert doc: %s. Proceeding without it.", e)
+        return ""
+
+
 def process_strategy(*, brief, examples_dir, rubric_notes, dry_run):
     schema_text = strategy_rubric.strategy_schema_json_text()
     ex_text = serialize_examples_dir(examples_dir) or "(No example workbooks found.)"
-    user = build_user_prompt(rubric="Strategy", rubric_notes=rubric_notes, brief=brief, schema_text=schema_text, examples_text=ex_text)
+    extra_context = _build_expert_context_for_brief(brief)
+    user = build_user_prompt(
+        rubric="Strategy", rubric_notes=rubric_notes, brief=brief,
+        schema_text=schema_text, examples_text=ex_text, extra_context=extra_context,
+    )
     system = load_base_system_prompt()
     if dry_run:
         return strategy_rubric.strategy_json_template()
@@ -160,7 +246,11 @@ def process_glossary(*, brief, examples_dir, rubric_notes, dry_run):
     layout = glossary_rubric.get_glossary_layout(examples_dir)
     schema_text = glossary_rubric.glossary_schema_json_text(layout)
     ex_text = serialize_examples_dir(examples_dir) or "(No example workbooks found.)"
-    user = build_user_prompt(rubric="Glossary", rubric_notes=rubric_notes, brief=brief, schema_text=schema_text, examples_text=ex_text)
+    extra_context = _build_expert_context_for_brief(brief)
+    user = build_user_prompt(
+        rubric="Glossary", rubric_notes=rubric_notes, brief=brief,
+        schema_text=schema_text, examples_text=ex_text, extra_context=extra_context,
+    )
     system = load_base_system_prompt()
     if dry_run:
         return glossary_rubric.glossary_json_template(), layout
@@ -255,13 +345,56 @@ def save_first_steps_output(data, *, out_path, jira_url):
     wb.save(out_path)
 
 
+def process_ongoing_p1(*, brief, examples_dir, rubric_notes, dry_run):
+    schema_text = ongoing_p1_rubric.ongoing_p1_schema_json_text()
+    ex_text = serialize_examples_dir(examples_dir) or "(No example workbooks found.)"
+    extra_context = _build_expert_context_for_brief(brief)
+    user = build_user_prompt(
+        rubric="Ongoing P1", rubric_notes=rubric_notes, brief=brief,
+        schema_text=schema_text, examples_text=ex_text, extra_context=extra_context,
+    )
+    system = load_base_system_prompt()
+    if dry_run:
+        return ongoing_p1_rubric.ongoing_p1_json_template()
+    raw = call_claude_json(agent_dir=AGENT_DIR, system_prompt=system, user_prompt=user)
+    return ongoing_p1_rubric.normalize_ongoing_p1_payload(raw)
+
+
+def process_ongoing_p2(*, brief, examples_dir, rubric_notes, dry_run):
+    schema_text = ongoing_p2_rubric.ongoing_p2_schema_json_text()
+    ex_text = serialize_examples_dir(examples_dir) or "(No example workbooks found.)"
+    extra_context = _build_expert_context_for_brief(brief)
+    user = build_user_prompt(
+        rubric="Ongoing P2", rubric_notes=rubric_notes, brief=brief,
+        schema_text=schema_text, examples_text=ex_text, extra_context=extra_context,
+    )
+    system = load_base_system_prompt()
+    if dry_run:
+        return ongoing_p2_rubric.ongoing_p2_json_template()
+    raw = call_claude_json(agent_dir=AGENT_DIR, system_prompt=system, user_prompt=user)
+    return ongoing_p2_rubric.normalize_ongoing_p2_payload(raw)
+
+
+def save_ongoing_p1_output(data, *, out_path, jira_url, week_label=""):
+    wb = ongoing_p1_rubric.build_ongoing_p1_workbook(data, jira_url=jira_url, week_label=week_label)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    wb.save(out_path)
+
+
+def save_ongoing_p2_output(data, *, out_path, jira_url, ts_date="", aotd_date=""):
+    wb = ongoing_p2_rubric.build_ongoing_p2_workbook(data, jira_url=jira_url, ts_date=ts_date, aotd_date=aotd_date)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    wb.save(out_path)
+
+
 # ---------- Google Sheets delivery ----------
 
 def upload_to_sheets(rubric: str, data: Any, *, title: str, jira_url: str) -> str | None:
     """Create a native Google Sheet for this rubric, return its URL or None on failure."""
     from sheets_client import (
         build_glossary_sheet, build_strategy_sheet, build_ugc_sheet,
-        build_first_steps_sheet, get_output_folder_id,
+        build_first_steps_sheet, build_ongoing_p1_sheet, build_ongoing_p2_sheet,
+        get_output_folder_id,
     )
     from rubrics.glossary import ROW_ORDER as GLOSSARY_ROWS, ROW_DISPLAY as GLOSSARY_DISPLAY
     from rubrics.strategy import ROW_ORDER as STRATEGY_ROWS
@@ -293,6 +426,14 @@ def upload_to_sheets(rubric: str, data: Any, *, title: str, jira_url: str) -> st
             _, url = build_first_steps_sheet(
                 AGENT_DIR, title=title, jira_url=jira_url, data=data,
                 row_order=FIRST_STEPS_ROWS, folder_id=folder_id,
+            )
+        elif rubric == "Ongoing P1":
+            _, url = build_ongoing_p1_sheet(
+                AGENT_DIR, title=title, jira_url=jira_url, data=data, folder_id=folder_id,
+            )
+        elif rubric == "Ongoing P2":
+            _, url = build_ongoing_p2_sheet(
+                AGENT_DIR, title=title, jira_url=jira_url, data=data, folder_id=folder_id,
             )
         else:
             return None
@@ -354,6 +495,18 @@ def process_one_brief(
             save_first_steps_output(data, out_path=out_path, jira_url=jira_url)
             if to_sheets:
                 sheet_url = upload_to_sheets("First steps in trading", data, title=f"{issue_key} — {summary}", jira_url=jira_url)
+    elif rubric == "Ongoing P1":
+        data = process_ongoing_p1(brief=brief, examples_dir=examples_dir, rubric_notes=notes, dry_run=dry_run)
+        if not dry_run:
+            save_ongoing_p1_output(data, out_path=out_path, jira_url=jira_url)
+            if to_sheets:
+                sheet_url = upload_to_sheets("Ongoing P1", data, title=f"{issue_key} — {summary}", jira_url=jira_url)
+    elif rubric == "Ongoing P2":
+        data = process_ongoing_p2(brief=brief, examples_dir=examples_dir, rubric_notes=notes, dry_run=dry_run)
+        if not dry_run:
+            save_ongoing_p2_output(data, out_path=out_path, jira_url=jira_url)
+            if to_sheets:
+                sheet_url = upload_to_sheets("Ongoing P2", data, title=f"{issue_key} — {summary}", jira_url=jira_url)
     else:
         return False, f"rubric '{rubric}' has no handler", None
 

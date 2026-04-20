@@ -381,3 +381,108 @@ def build_first_steps_sheet(
         col_widths=[(0, 160), (1, 560), (2, 70)],
     )
     return ss_id, ss_url
+
+
+
+def build_ongoing_p1_sheet(
+    agent_dir: Path, *, title: str, jira_url: str, data: dict[str, Any], folder_id: str,
+) -> tuple[str, str]:
+    """Create a native Google Sheet for Ongoing P1: single row, single tab."""
+    ss_id, ss_url = create_sheet_in_folder(agent_dir, title=title, folder_id=folder_id)
+    _, sheets = _services(agent_dir)
+    tab = "Economic calendar"
+    sheet_id = rename_default_sheet(sheets, spreadsheet_id=ss_id, new_name=tab)
+
+    image_title = data.get("image_title", "") or ""
+    notes = (
+        "1. Translate the Image Title row. "
+        "2. The entire text of the post should be written in one cell. "
+        "3. Separate paragraphs by one paragraph break (Alt/Option + Enter) as you'd do that in a doc. "
+        "4. SM posts can't have text styling. So please don't apply any."
+    )
+
+    values = [
+        ["Jira Task Link →", jira_url],
+        [None, "EN", "Chars"],
+        ["Image Title  (AR, TH, FA)", image_title, "=LEN(B3)"],
+        [None],
+        [notes],
+    ]
+    write_values(
+        sheets, spreadsheet_id=ss_id, tab_name=tab,
+        a1_range=f"A1:C{len(values)}", values=values,
+    )
+    format_header_and_widths(
+        sheets, spreadsheet_id=ss_id, sheet_id=sheet_id, header_row=2,
+        col_widths=[(0, 200), (1, 700), (2, 70)],
+    )
+    return ss_id, ss_url
+
+
+def build_ongoing_p2_sheet(
+    agent_dir: Path, *, title: str, jira_url: str, data: dict[str, Any], folder_id: str,
+) -> tuple[str, str]:
+    """Create a native Google Sheet for Ongoing P2: two tabs (Trading Signal + Asset of the day)."""
+    ss_id, ss_url = create_sheet_in_folder(agent_dir, title=title, folder_id=folder_id)
+    _, sheets = _services(agent_dir)
+
+    # Tab 1: Trading Signal
+    ts_data = data.get("trading_signal") or {}
+    ts_tab = "Trading Signal"
+    ts_sheet_id = rename_default_sheet(sheets, spreadsheet_id=ss_id, new_name=ts_tab)
+
+    ts_rows = [
+        ("Image Title", ts_data.get("image_title", "")),
+        ("TG (max 1024)", ts_data.get("tg", "")),
+        ("Button", ts_data.get("button", "")),
+        ("TW", ts_data.get("tw", "")),
+        ("Poll Option 1", ts_data.get("poll_option_1", "")),
+        ("Poll Option 2", ts_data.get("poll_option_2", "")),
+    ]
+
+    ts_values = [
+        ["Jira Task Link →", jira_url],
+        [None, "EN", "Chars"],
+    ]
+    for i, (label, val) in enumerate(ts_rows, start=3):
+        ts_values.append([label, val or "", f"=LEN(B{i})"])
+
+    write_values(
+        sheets, spreadsheet_id=ss_id, tab_name=ts_tab,
+        a1_range=f"A1:C{len(ts_values)}", values=ts_values,
+    )
+    format_header_and_widths(
+        sheets, spreadsheet_id=ss_id, sheet_id=ts_sheet_id, header_row=2,
+        col_widths=[(0, 160), (1, 560), (2, 70)],
+    )
+
+    # Tab 2: Asset of the day
+    aotd_data = data.get("asset_of_the_day") or {}
+    aotd_tab = "Asset of the day"
+    aotd_sheet_id = add_sheet_tab(sheets, spreadsheet_id=ss_id, title=aotd_tab)
+
+    aotd_rows = [
+        ("Image Title (TG, FB)", aotd_data.get("image_title", "")),
+        ("TG  (max 1024)", aotd_data.get("tg", "")),
+        ("Button [platform link]", aotd_data.get("button", "")),
+        ("FB post", aotd_data.get("fb_post", "")),
+    ]
+
+    aotd_values = [
+        ["Jira Task Link →", jira_url],
+        [None, "EN", "Chars"],
+        [None, "Asset of the week"],
+    ]
+    for i, (label, val) in enumerate(aotd_rows, start=4):
+        aotd_values.append([label, val or "", f"=LEN(B{i})"])
+
+    write_values(
+        sheets, spreadsheet_id=ss_id, tab_name=aotd_tab,
+        a1_range=f"A1:C{len(aotd_values)}", values=aotd_values,
+    )
+    format_header_and_widths(
+        sheets, spreadsheet_id=ss_id, sheet_id=aotd_sheet_id, header_row=2,
+        col_widths=[(0, 180), (1, 560), (2, 70)],
+    )
+
+    return ss_id, ss_url

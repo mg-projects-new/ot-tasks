@@ -1,82 +1,92 @@
 rubrics:
   Strategy:
-    notes: |
-      Strategy = multi-card carousel post explaining a trading strategy, pattern, indicator, or technique.
+    notes: 'Strategy = multi-card carousel post explaining a trading strategy, pattern, indicator, or technique.
+
       Structure: 7 explanation cards + 1 closing card (with IG & FB variants) + FB/IG/TG post captions.
+
       Voice: educational but accessible, concrete examples, not overly technical.
+
       Each card: one clear concept, max 2-3 short paragraphs per card.
+
       Cards typically cover: concept definition, how it works, setup/trigger, example, pros/cons, tips, pitfalls.
+
       Closing card (Card 8): CTA variants for IG (save/tap CTA) and FB (like/comment CTA).
+
       Channel captions (IG, FB, TG) are longer narrative versions of the carousel content.
+
       Compliance: no guaranteed profit claims, no "always wins" language.
 
+      '
   Glossary:
-    notes: |
-      Glossary = single-image post defining one trading term.
+    notes: 'Glossary = single-image post defining one trading term.
+
       Format: image with the term + short explanation, plus channel captions.
+
       Keep definitions simple and concrete. One clear analogy or example is better than a dry textbook definition.
+
       Voice: friendly educator, not formal academic.
+
       Channel captions:
+
       - IG/FB: full definition + example + short CTA
+
       - TG: same, optimized for readable-in-chat length
+
       - Button: short CTA text ("Try now", "Learn more")
+
       No guaranteed profit language.
 
+      '
   UGC:
-    notes: |
-      UGC = TikTok short-form videos. Produce TWO pieces of copy per video:
-      1. Cover — the short hook text shown on the video thumbnail / first frame.
-         Usually 3–8 words, with one or two emoji. Should stop the scroll.
-         Examples: "Waiting for a sign? 📦", "They lied to you 👀", "Daily routine of a trader boyfriend 📱☕"
-      2. Caption — the post caption below the video.
-         Usually 1–3 short lines. Separate paragraph breaks by using the literal text " | " (space-pipe-space) INSIDE the same string.
-         Always eke "Tap 💚 if ...".
-         Voice: first-person or second-person, conversational, meme-aware, playful.
-         Topics often reference partner/friend/couple dynamics, relatable trader habits.
-      Per-video guidance:
-      - Each video block in the brief (`*Видео 1.*`, `*Видео 2.*`, etc.) includes a "Подводка к посту" (caption direction) and a "Пример" (example reel with a sample caption).
-      - Use the caption direction as the functional goal for that video (e.g. "Шутка + ста на лайк" = joke + like CTA).
-      - Use the `Пример` as a voice anchor — match its rhythm, tone, and emoji density, NOT its literal content.
-      - Do not invent script narrative content that isn't in the brief (the actual video script lives in a linked Google Doc the agent can't access).
-      - If the brief only supplies the caption direction and example, produce Cover + Caption that fit the video concept — that is the only output needed.
-      Compliance: no guaranteed put responsible.
-
+    notes: "UGC = TikTok short-form videos. Produce TWO pieces of copy per video:\n1. Cover — the short hook text shown on the video thumbnail / first frame.\n   Usually 3–8 words, with one or two emoji.\
+      \ Should stop the scroll.\n   Examples: \"Waiting for a sign? \U0001F4E6\", \"They lied to you \U0001F440\", \"Daily routine of a trader boyfriend \U0001F4F1☕\"\n2. Caption — the post caption below\
+      \ the video.\n   Usually 1–3 short lines. Separate paragraph breaks by using the literal text \" | \" (space-pipe-space) INSIDE the same string.\n   Always eke \"Tap \U0001F49A if ...\".\n   Voice:\
+      \ first-person or second-person, conversational, meme-aware, playful.\n   Topics often reference partner/friend/couple dynamics, relatable trader habits.\nPer-video guidance:\n- Each video block in\
+      \ the brief (`*Видео 1.*`, `*Видео 2.*`, etc.) includes a \"Подводка к посту\" (caption direction) and a \"Пример\" (example reel with a sample caption).\n- Use the caption direction as the functional\
+      \ goal for that video (e.g. \"Шутка + ста на лайк\" = joke + like CTA).\n- Use the `Пример` as a voice anchor — match its rhythm, tone, and emoji density, NOT its literal content.\n- Do not invent\
+      \ script narrative content that isn't in the brief (the actual video script lives in a linked Google Doc the agent can't access).\n- If the brief only supplies the caption direction and example, produce\
+      \ Cover + Caption that fit the video concept — that is the only output needed.\nCompliance: no guaranteed put responsible.\n"
   First steps in trading:
-    notes: |
-      First steps in trading = educational content for beginners about platform features and trading basics.
-
-      FORMAT CHOICE — IMPORTANT:
-      DEFAULT to CAROUSEL (multi-card) format. Do NOT leave Cards 2-5 empty unless the topic is trivially simple.
-      If the topic has 3+ distinct beats (mechanics, steps, types, examples, tips), it MUST be a carousel.
-
-      CAROUSEL structure (use this in 90% of cases):
-      - Image Title: hook on card 1 + "Insights from Olymptrade expert José Coelho" (or "Tips from our expert José Coelho")
-      - Card 2: first main concept / first mechanic / first tip (2-4 short lines, one emoji)
-      - Card 3: second concept / second mechanic / concrete example (2-4 short lines, one emoji)
-      - Card 4: third concept / summary / why-it-matters (2-4 short lines, one emoji)
-      - Card 5 (IG): closing card with "📌 Save for later" / "Save to come back to" CTA
-      - Card 5 (FB): closing card with "Like for more like this" CTA
-      - FB Post, IG Post, TG Post: full narrative versions (800-1500 chars), longer than cards
-      - Button: short CTA ("Try now", "Open chart", "Learn more")
-
-      SINGLE-IMAGE structure (rare — only when the topic is one clean idea):
-      - Image Title: hook + expert credit
-      - Card 2-5: leave empty
-      - FB/IG/TG Post: full content
-      - Button: CTA
-
-      Card writing rules:
-      - ONE clear micro-point per card.
-      - Scannable: short lines, one concept, a concrete example or number if relevant.
-      - Don't stuff a full post into a card. Cards are visual-first; posts are the long read.
-
-      Voice: conversational, friendly, concrete. Rewrite expert source text in livelier, more social-media-native tone.
-
-      Personalization: always credit Olymptrade expert (usually "José Coelho") in Image Title and naturally in posts.
-
-      Channel CTAs:
-      - FB: "Like if this helped"
-      - IG: "📌 Save for later"
-      - TG: reactions + button label
-
-      Emojis allowed wexamples use them (🟢 📍 ⏱️ 📌 💡 📊 🔍). No guaranteed-profit language.
+    notes: "First steps in trading = educational content for beginners about platform features and trading basics.\n\nFORMAT CHOICE — IMPORTANT:\nDEFAULT to CAROUSEL (multi-card) format. Do NOT leave Cards\
+      \ 2-5 empty unless the topic is trivially simple.\nIf the topic has 3+ distinct beats (mechanics, steps, types, examples, tips), it MUST be a carousel.\n\nCONTENT SEPARATION — CARDS vs POSTS (CRITICAL):\n\
+      Cards and channel posts must NOT repeat each other. They serve different functions:\n\nCARDS answer WHAT (definitional + mechanical layer):\n  - Definitions of key terms from the expert source\n \
+      \ - How the mechanic works (step-by-step, concrete)\n  - One concrete numeric example from the expert\n  - Brief set-up instructions if the topic involves setup\n\nPOSTS answer HOW and WHY (strategic\
+      \ + practical layer):\n  - Strategic principles (e.g. \"Set your risk before entering the trade\")\n  - Practical habits (e.g. \"Stick to the golden rule: risk only 2-5% per trade\")\n  - Mental frames\
+      \ and do's and don'ts\n  - When/why to apply the concept\n  - Closing principle (e.g. \"Let the platform manage the exit\")\n\nBoth draw from the SAME expert source but pull DIFFERENT aspects of it.\n\
+      A good test: reading the cards and the post back-to-back should feel complementary,\nnot redundant. If a post paragraph could swap places with a card, you're repeating.\n\nCAROUSEL structure:\n  -\
+      \ Image Title: expert's opening hook + thesis (e.g. \"Stop Loss & Take Profit / Tips from our expert José Coelho / Real traders exit trades according to plan, not panic.\")\n  - Card 2: WHAT it is\
+      \ / how it works — definition, mechanics, one concrete example with expert's numbers\n  - Card 3: Sub-concept 1 (if the topic has sub-concepts like SL & TP, or types, or steps) — definition + brief\
+      \ set-up tips\n  - Card 4: Sub-concept 2 — definition + brief set-up tips  (If there's only one core concept, use Card 4 for the expert's most actionable takeaway)\n  - Card 5 (IG): closing with \"\
+      \U0001F4CC Save for later\" / \"Save it for future reference\" CTA\n  - Card 5 (FB): closing with \"Like for more posts like this\" CTA\n  - FB / IG / TG Posts: tip-based narrative — 3-4 strategic\
+      \ tips with bold headers (e.g. \"✅ Set your risk before entering\"), each tip one short paragraph. End with a platform-trust message (\"Let the platform manage the exit\") + reaction CTA.\n  - Button:\
+      \ short CTA (\"Try now\", \"Open chart\", \"Learn more\")\n\nSUB-CONCEPT DETECTION:\nClaude decides per-task whether the expert text contains sub-concepts (like Stop Loss + Take Profit, or types of\
+      \ orders) that map cleanly to Card 3 / Card 4. If the expert text is a single concept (like \"profitability\"), Card 3 and Card 4 each cover a different facet (definition, mechanic, or application)\
+      \ rather than splitting a concept that doesn't split.\n\nSINGLE-IMAGE structure (rare — only when the topic is one clean idea with no decomposition):\n  - Image Title: hook + expert credit\n  - Card\
+      \ 2-5: leave empty\n  - FB/IG/TG Post: full content (still cards=WHAT + posts=HOW applied within the one post if useful)\n  - Button: CTA\n\nCard writing rules:\n  - ONE clear micro-point per card.\n\
+      \  - Scannable: short lines, one concept, a concrete example or number if relevant.\n  - DON'T stuff a full post into a card. Cards are visual-first; posts are the long read.\n  - Use the expert's\
+      \ exact numbers and examples (NOT invented ones).\n\nVoice: conversational, friendly, concrete. Rewrite expert source text in livelier, more social-media-native tone.\n\nPersonalization: always credit\
+      \ Olymptrade expert (usually \"José Coelho\") in Image Title and naturally in posts.\n\nChannel CTAs:\n  - FB: \"Like if this helped\" or \"Like for more posts like this\"\n  - IG: \"\U0001F4CC Save\
+      \ for later\" or \"Save it for future reference\"\n  - TG: React + button label\n\nEmojis allowed where examples use them (\U0001F7E2 \U0001F4CD ⏱️ \U0001F4CC \U0001F4A1 \U0001F4CA \U0001F50D ✅).\
+      \ No guaranteed-profit language.\n"
+  Ongoing P1:
+    notes: "Ongoing P1 = Weekly Economic Calendar post (rigid format).\n\nOUTPUT: ONE row, 'Image Title (AR, TH, FA)', containing exactly 6 events\njoined by newlines. English only.\n\nEVENT FORMAT (each\
+      \ event is one line, 6 fields separated by ***):\n  DD***Month***WDAY***HH:MM am/pm UTC***Event name***Impact description\n\nExamples of correctly formatted events:\n  23***March***MON***11:30 pm\
+      \ UTC***Japan national core CPI***Affects all currency pairs with JPY\n  24***March***TUE***9:30 am UTC***UK manufacturing PMI***Affects all currency pairs with GBP\n\nRULES:\n- EXACTLY 6 events.\
+      \ Not 5, not 7.\n- Pick events from the expert doc for the week the ticket covers (date range is in the Summary).\n- If the expert doc has more than 6 events, apply this selection rule: if multiple\n\
+      \  events fall on the same day for the same country, keep only one. Prefer the\n  higher-impact / more distinct event.\n- Use short weekday codes: MON, TUE, WED, THU, FRI, SAT, SUN.\n- Month as a\
+      \ full word (March, April, etc.).\n- Day as a number (23, not 23rd).\n- Time in UTC, lowercase am/pm.\n- Impact description: one short clause describing which currency pairs or assets\n  are affected\
+      \ (e.g. 'Affects all currency pairs with JPY', 'Affects USD-based assets').\n- Join the 6 events with a single newline ('\\n'). Do NOT add extra blank lines.\n\nStrict: no introduction text, no commentary,\
+      \ no bullet points, no emojis.\nJust 6 formatted event lines in the 'image_title' field.\n"
+  Ongoing P2:
+    notes: "Ongoing P2 = Weekly multi-post deliverable (2 tabs).\n\nOUTPUT: Two post types, each in its own tab:\n  1. Trading Signal (event-driven forecast post)\n  2. Asset of the day / week (asset performance\
+      \ story)\n\nBoth draw content from the SAME expert doc (different sections). English only.\n\n=== TAB 1: TRADING SIGNAL ===\nRows (fill all):\n  - image_title: short hook visible on the image, includes\
+      \ forecast thresholds.\n    Format: \"\U0001F514 On {Weekday}, {Month} {Day} at {Time} UTC, | the {Country} will release its {Event}.\n             |  | <{Threshold} may drive {ASSET} up | >{Threshold}\
+      \ may drive {ASSET} down\"\n    (Use | as line breaks within the cell. Use the expert's exact numbers.)\n  - tg: full Telegram post, max 1024 characters. Explains the event, its typical\n    effect\
+      \ on markets, and the forecast reaction. End with a soft engagement\n    prompt ('What's your forecast?'). Include emojis where examples use them (\U0001F514 \U0001F53C \U0001F53D).\n  - button: short\
+      \ CTA, format 'Trade {ASSET}' or 'Trade on {ASSET}'.\n  - tw: Twitter/X version — shorter, bullet-style. Same facts, tighter voice.\n    End with a question inviting a vote.\n  - poll_option_1: first\
+      \ Twitter poll option, format '{ASSET} will go up ⬆️'.\n  - poll_option_2: second poll option, format '{ASSET} will go down ⬇️'.\n\n=== TAB 2: ASSET OF THE DAY ===\nRows (fill all):\n  - image_title:\
+      \ short hook highlighting the asset's recent move.\n    Example voice: 'Exxon Mobil stock jumped 8.5%' or 'BRENT swinging big between $100 and $118'.\n  - tg: full Telegram post, max 1024 characters.\
+      \ Story of the asset's recent\n    performance, reasons for the move, and one trading angle. Use emojis\n    where the examples use them (\U0001F9D0 \U0001F6A2 ✅ \U0001F4CA).\n  - button: format 'Trade\
+      \ on {ASSET_TICKER}'.\n  - fb_post: Facebook version. Rework the TG text avoiding political topics and\n    removing the example-profit language (to avoid FB moderation triggers).\n    Replace reaction\
+      \ CTAs with a question-based comment CTA ('What's your\n    forecast — will it go up or down? Drop your prediction in the comments').\n\nCOMMON RULES:\n- Use ONLY the numbers, events, and assets from\
+      \ the expert doc. Do not invent data.\n- Respect the 1024-char limit for TG posts.\n- No guaranteed-profit language.\n- Keep emoji density in line with the examples.\n"
