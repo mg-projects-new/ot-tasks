@@ -197,9 +197,30 @@ def process_ugc(*, brief, examples_dir, rubric_notes, dry_run, override_count):
 def process_first_steps(*, brief, examples_dir, rubric_notes, dry_run):
     schema_text = first_steps_rubric.first_steps_schema_json_text()
     ex_text = serialize_examples_dir(examples_dir) or "(No example workbooks found.)"
+    extra_context = ""
+    description = str(brief.get("Description") or "")
+    summary = str(brief.get("Summary") or "")
+    try:
+        from docs_client import extract_doc_id, fetch_tab_text_for_ticket
+        doc_id = extract_doc_id(description)
+        if doc_id:
+            logger.info("Fetching expert source from Google Doc %s ...", doc_id)
+            result = fetch_tab_text_for_ticket(
+                agent_dir=AGENT_DIR, doc_id=doc_id, ticket_summary=summary,
+            )
+            if result:
+                tab_title, expert_text = result
+                logger.info("Using expert tab %r (%d chars)", tab_title, len(expert_text))
+                extra_context = first_steps_rubric.build_expert_context_block(tab_title, expert_text)
+            else:
+                logger.warning("No matching expert tab found; proceeding without expert source")
+        else:
+            logger.info("No Google Doc URL found in brief description")
+    except Exception as e:
+        logger.warning("Could not fetch expert doc: %s. Proceeding without it.", e)
     user = build_user_prompt(
         rubric="First steps in trading", rubric_notes=rubric_notes, brief=brief,
-        schema_text=schema_text, examples_text=ex_text,
+        schema_text=schema_text, examples_text=ex_text, extra_context=extra_context,
     )
     system = load_base_system_prompt()
     if dry_run:

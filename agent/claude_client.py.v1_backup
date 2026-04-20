@@ -31,7 +31,8 @@ def get_model_name() -> str:
 
 def _extract_balanced_json(s: str) -> str | None:
     """Find the first balanced {...} block, tracking string state so that braces
-    inside string literals don't mess up the depth count."""
+    inside string literals don't mess up the depth count. Returns the substring
+    or None if no balanced block found."""
     start = s.find("{")
     if start == -1:
         return None
@@ -61,61 +62,29 @@ def _extract_balanced_json(s: str) -> str | None:
 
 
 def _repair_json_strings(s: str) -> str:
-    """Repair common JSON emission issues inside string literals:
-    - unescaped raw newlines/tabs -> \\n / \\t
-    - unescaped inner quotes (heuristic) -> \\"
-    We track string-literal state by tracking quote transitions that look
-    structurally correct (the quote is preceded by [:,{[] or whitespace).
-    For inner quotes (a quote that appears inside a string literal), we escape them.
+    """Best-effort repair of common JSON emission issues:
+    - unescaped raw newlines/tabs inside string literals -> \\n / \\t
+    - Windows line endings normalized
+    - smart quotes inside keys/structural positions left alone
+    Operates only when *inside a JSON string literal*, tracked by state.
     """
     out: list[str] = []
     in_string = False
     escape_next = False
-    i = 0
-    n = len(s)
-
-    while i < n:
-        ch = s[i]
-
+    for ch in s:
         if escape_next:
             out.append(ch)
             escape_next = False
-            i += 1
             continue
-
         if ch == "\\":
             out.append(ch)
             if in_string:
                 escape_next = True
-            i += 1
             continue
-
         if ch == '"':
-            if not in_string:
-                # Opening quote
-                in_string = True
-                out.append(ch)
-                i += 1
-                continue
-            # We're in a string and hit a quote. Is this the closing quote,
-            # or an unescaped inner quote we should fix?
-            # Look ahead past whitespace: if next non-ws is one of [,}\]:] or end, it's closing.
-            j = i + 1
-            while j < n and s[j] in " \t\r\n":
-                j += 1
-            nxt = s[j] if j < n else ""
-            if nxt in ",}]:" or nxt == "":
-                # Closing quote
-                in_string = False
-                out.append(ch)
-                i += 1
-                continue
-            # Otherwise this is an unescaped inner quote -> escape it
-            out.append("\\")
+            in_string = not in_string
             out.append(ch)
-            i += 1
             continue
-
         if in_string:
             if ch == "\n":
                 out.append("\\n")
@@ -127,8 +96,6 @@ def _repair_json_strings(s: str) -> str:
                 out.append(ch)
         else:
             out.append(ch)
-        i += 1
-
     return "".join(out)
 
 
@@ -156,6 +123,7 @@ def _strip_trailing_commas(s: str) -> str:
             i += 1
             continue
         if not in_string and ch == ",":
+            # peek ahead: skip whitespace, if next non-ws is ] or }, drop the comma
             j = i + 1
             while j < len(s) and s[j] in " \t\n\r":
                 j += 1
@@ -169,7 +137,7 @@ def _strip_trailing_commas(s: str) -> str:
 
 def extract_json_object(text: str) -> dict[str, Any]:
     """
-    Parse JSON from model output. Strips optional ```json fences.
+    Parse JSON from model output. Strips optional ```json fences and leading junk.
     Tries multiple recovery strategies if naive parsing fails.
     """
     s = text.strip()
@@ -193,7 +161,7 @@ def extract_json_object(text: str) -> dict[str, Any]:
     except json.JSONDecodeError:
         pass
 
-    # Strategy 3: repair unescaped newlines + inner quotes inside strings
+    # Strategy 3: repair common issues (unescaped newlines inside strings)
     repaired = _repair_json_strings(block)
     try:
         return json.loads(repaired)
@@ -205,6 +173,7 @@ def extract_json_object(text: str) -> dict[str, Any]:
     try:
         return json.loads(cleaned)
     except json.JSONDecodeError as e:
+        # Show a snippet around the error for debugging
         err_pos = getattr(e, "pos", 0)
         start = max(0, err_pos - 80)
         end = min(len(cleaned), err_pos + 80)
@@ -223,8 +192,9 @@ def call_claude_json(
 ) -> dict[str, Any]:
     """
     Send system + user messages; return parsed JSON dict.
-    Retries once with cleanup prompt if JSON parsing fails.
-    Retries on 5xx / connection errors. No retry on 401.
+    On 401: prints one line and re-raises a clean error (no traceback from caller).
+    Retries once on 5xx / connection errors with short backoff. No retry on 401.
+    Retries once with a cleanup instruction if JSON parsing fails.
     """
     key = load_env_key(agent_dir)
     if not key:
@@ -235,11 +205,10 @@ def call_claude_json(
     model_name = env_model or DEFAULT_MODEL
     client = anthropic.Anthropic(api_key=key)
 
+    # Strengthen system prompt with an explicit JSON discipline reminder
     strict_system = system_prompt + (
         "\n\nIMPORTANT FOR JSON OUTPUT: Your entire response must be a single valid JSON object. "
         "Inside string values, escape every newline as \\n, every tab as \\t, every double quote as \\\". "
-        "When you need to quote something inside a value (like a button label or a feature name), "
-        "use single quotes or backticks, NOT double quotes. Example: 'Candlesticks' not \"Candlesticks\". "
         "Do NOT include raw unescaped newlines inside string values. "
         "No markdown fences, no prose before or after the JSON."
     )
@@ -258,29 +227,27 @@ def call_claude_json(
         return "".join(parts)
 
     last_err: Exception | None = None
+    last_text: str | None = None
     for attempt in range(2):
         try:
             text = _once(strict_system, user_prompt)
+            last_text = text
             try:
                 return extract_json_object(text)
             except ValueError as parse_err:
+                # JSON parse failure: retry once with a repair request
                 if attempt == 0:
-                    logger.warning(
-                        "First JSON parse failed: %s — waiting 30s to avoid rate limit, then retrying",
-                        parse_err,
-                    )
-                    # Wait long enough for rate limit window to slide
-                    time.sleep(30.0)
+                    logger.warning("First JSON parse failed: %s — retrying with repair prompt", parse_err)
                     repair_user = (
-                        "Your previous response could not be parsed as JSON. "
-                        "Please RE-EMIT the same content as a single strictly valid JSON object. "
-                        "Escape every newline as \\n, every tab as \\t, every inner double quote as \\\". "
-                        "When quoting terms inside a value, prefer single quotes. "
-                        "No markdown fences. No prose.\n\n"
-                        f"Original request:\n{user_prompt}"
+                        f"Your previous response could not be parsed as JSON because of a formatting error. "
+                        f"Please re-emit the SAME content as a single strictly valid JSON object. "
+                        f"Escape every newline as \\n, every tab as \\t, every double quote as \\\". "
+                        f"No markdown fences. No prose.\n\n"
+                        f"Original task was:\n{user_prompt}"
                     )
                     try:
                         retry_text = _once(strict_system, repair_user)
+                        last_text = retry_text
                         return extract_json_object(retry_text)
                     except Exception as retry_err:
                         last_err = retry_err
@@ -293,14 +260,6 @@ def call_claude_json(
                     "Ensure billing is funded."
                 )
                 raise RuntimeError("Anthropic 401 Unauthorized") from e
-            # Rate limit: wait longer
-            if getattr(e, "status_code", None) == 429:
-                last_err = e
-                if attempt == 0:
-                    logger.warning("Rate limit hit, waiting 60s before retry")
-                    time.sleep(60.0)
-                    continue
-                raise
             last_err = e
             if attempt == 0 and getattr(e, "status_code", 0) >= 500:
                 time.sleep(2.0)

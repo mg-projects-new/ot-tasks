@@ -1,8 +1,7 @@
 """First steps in trading rubric: English-only. Base trader-education content.
 
 Format is flexible: single image (Image Title + post rows) OR carousel (cards).
-Default = carousel. The agent fetches expert-source text from the Google Doc
-referenced in the Jira brief and feeds it to Claude as authoritative material.
+The model fills what's needed for each task and leaves the rest blank.
 """
 
 from __future__ import annotations
@@ -38,27 +37,6 @@ def first_steps_json_template() -> dict[str, Any]:
 
 def first_steps_schema_json_text() -> str:
     return json.dumps(first_steps_json_template(), ensure_ascii=False, indent=2)
-
-
-def build_expert_context_block(tab_title: str, expert_text: str) -> str:
-    """Wrap the expert-source text as a clearly-labelled prompt section.
-
-    This block is added as `extra_context` in build_user_prompt so Claude
-    treats it as authoritative source material to paraphrase, not invent around.
-    """
-    return (
-        "=== EXPERT SOURCE MATERIAL (authoritative — paraphrase, don't invent) ===\n"
-        f"Matched tab: {tab_title!r}\n"
-        "This is the expert's own draft on this topic from Olymptrade's expert doc.\n"
-        "Use this as the FACTUAL BASIS for all cards and posts. Specifically:\n"
-        "  - Use the mechanics, numbers, examples, and key points from this source.\n"
-        "  - Rewrite the expert's academic prose in livelier social-media tone.\n"
-        "  - Do NOT invent different examples, numbers, or concepts that aren't in this source.\n"
-        "  - You may compress, reorganize, and pull out the most card-friendly points.\n"
-        "---\n"
-        f"{expert_text}\n"
-        "---\n"
-    )
 
 
 def fill_first_steps_workbook(wb: Workbook, data: dict[str, Any], *, jira_url: str) -> None:

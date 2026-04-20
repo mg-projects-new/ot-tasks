@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 SCOPES = [
     "https://www.googleapis.com/auth/drive.file",   # create/modify files we make
     "https://www.googleapis.com/auth/spreadsheets",  # read/write our Sheets
+    "https://www.googleapis.com/auth/documents.readonly",  # read expert-source docs
 ]
 
 CREDENTIALS_FILE = "google_credentials.json"
