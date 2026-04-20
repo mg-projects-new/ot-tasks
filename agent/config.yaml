@@ -27,3 +27,25 @@ rubrics:
       - If the brief only supplies the caption direction and example, produce Cover + Caption that fit the video concept — that is the only output needed.
 
       Compliance: no guaranteed profit language; no "risk-free" claims; keep it playful but responsible.
+      First steps in trading:
+    notes: |
+      First steps in trading = educational content for beginners.
+      Base concepts (platform features, trading basics) explained simply with clear examples.
+
+      Structure varies per task — fill rows that fit the brief, leave others as empty strings:
+      - Single-image post: fill only Image Title + FB Post + IG Post + TG Post + Button
+      - Carousel: fill Image Title + Card 2 + Card 3 + Card 4 + (optional Card 5 IG/FB) + channel posts + Button
+
+      Voice: conversational, friendly, concrete. Rewrite any expert source text in a livelier,
+      more social-media-native tone — not a literal translation of reference docs.
+
+      Personalization: the brief may mention an expert (often "José Coelho"). When present,
+      credit them in the Image Title and optionally in post text (e.g. "Insights from Olymptrade expert José Coelho").
+
+      Channel CTAs from the brief:
+      - FB: ask for a like ("Like if this was useful")
+      - IG: save-for-later ("Save to come back to")
+      - TG: reactions or a question + button label (e.g. "Try now", "Learn more")
+
+      Each carousel card has one clear micro-point; don't over-stuff. Emojis allowed where
+      examples use them (🟢 📍 ⏱️ 📌). Avoid guaranteed-profit language.

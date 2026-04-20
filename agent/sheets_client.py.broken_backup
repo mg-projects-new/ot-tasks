@@ -349,9 +349,7 @@ def _populate_ugc_tab(
         sheets_api, spreadsheet_id=spreadsheet_id, sheet_id=sheet_id, header_row=2,
         col_widths=[(0, 170), (1, 400), (2, 50), (3, 70)],
     )
-
-
-def build_first_steps_sheet(
+    def build_first_steps_sheet(
     agent_dir: Path, *, title: str, jira_url: str, data: dict[str, str],
     row_order: list[tuple[str, str]], folder_id: str,
 ) -> tuple[str, str]:
@@ -362,7 +360,7 @@ def build_first_steps_sheet(
     sheet_id = rename_default_sheet(sheets, spreadsheet_id=ss_id, new_name=tab)
 
     values: list[list[Any]] = []
-    values.append(["Jira Task Link \u2192", jira_url])
+    values.append(["Jira Task Link →", jira_url])
     values.append([None, "EN", "Chars"])
 
     for key, display in row_order:
